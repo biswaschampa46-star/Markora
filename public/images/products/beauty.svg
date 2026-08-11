@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600" role="img" aria-label="Beauty">
+  <rect width="600" height="600" fill="#f8f4ec"/>
+  <circle cx="300" cy="300" r="210" fill="#e8f7f3"/>
+  <g transform="translate(300 290)" fill="none" stroke="#0a6b5a" stroke-width="12" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M-40 -100l30 30-30 30-30-30z"/>
+    <path d="M40 -70l20 20-20 20-20-20z"/>
+    <path d="M-80 20l14 14-14 14-14-14z"/>
+    <path d="M70 50l10 10-10 10-10-10z"/>
+  </g>
+</svg>

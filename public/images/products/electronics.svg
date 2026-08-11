@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600" role="img" aria-label="Electronics">
+  <rect width="600" height="600" fill="#f8f4ec"/>
+  <circle cx="300" cy="300" r="210" fill="#e8f7f3"/>
+  <g transform="translate(300 300)">
+    <rect x="-70" y="-110" width="140" height="220" rx="18" fill="none" stroke="#0a6b5a" stroke-width="12"/>
+    <circle cx="0" cy="72" r="5" fill="#f2760c"/>
+  </g>
+</svg>

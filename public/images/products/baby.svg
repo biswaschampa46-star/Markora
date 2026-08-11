@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600" role="img" aria-label="Baby care">
+  <rect width="600" height="600" fill="#f8f4ec"/>
+  <circle cx="300" cy="300" r="210" fill="#e8f7f3"/>
+  <g transform="translate(300 300)" fill="none" stroke="#0a6b5a" stroke-width="12" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="300" cy="300" r="0" opacity="0"/>
+    <circle cx="-55" cy="0" r="7" fill="#0a6b5a" stroke="none"/>
+    <circle cx="55" cy="0" r="7" fill="#0a6b5a" stroke="none"/>
+    <path d="M-30 55c18 14 42 14 60 0"/>
+    <path d="M10 -115a95 95 0 0 1 85 60M-10 -115a95 95 0 0 0-85 60"/>
+    <circle cx="10" cy="-70" r="100"/>
+  </g>
+</svg>

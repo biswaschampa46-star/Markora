@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600" role="img" aria-label="Home and living">
+  <rect width="600" height="600" fill="#f8f4ec"/>
+  <circle cx="300" cy="300" r="210" fill="#e8f7f3"/>
+  <g transform="translate(300 300)" fill="none" stroke="#0a6b5a" stroke-width="12" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M-150 -40v-40h100v40"/>
+    <path d="M50 -40v-40h100v40"/>
+    <rect x="-150" y="-40" width="300" height="70" rx="10"/>
+    <rect x="-140" y="30" width="280" height="90" rx="14"/>
+    <path d="M-120 120v40M120 120v40"/>
+  </g>
+</svg>

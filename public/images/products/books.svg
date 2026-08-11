@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600" role="img" aria-label="Books">
+  <rect width="600" height="600" fill="#f8f4ec"/>
+  <circle cx="300" cy="300" r="210" fill="#e8f7f3"/>
+  <g transform="translate(300 310)" fill="none" stroke="#0a6b5a" stroke-width="12" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M0 -120v120"/>
+    <path d="M-110 -90a80 80 0 0 1 80 0 80 80 0 0 1 30-8 80 80 0 0 1 80 0v120a80 80 0 0 0-80 0 80 80 0 0 0-30-8 80 80 0 0 0-80 0z" transform="translate(0 30)"/>
+  </g>
+</svg>

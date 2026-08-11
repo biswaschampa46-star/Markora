@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600" role="img" aria-label="Fashion">
+  <rect width="600" height="600" fill="#f8f4ec"/>
+  <circle cx="300" cy="300" r="210" fill="#e8f7f3"/>
+  <g transform="translate(300 310)" fill="none" stroke="#0a6b5a" stroke-width="12" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M-130 -100 40 -140a50 50 0 0 0 30 0l170 40 -40 60h-40v120h-90V-40h-40v120h-90V-40h-40z"/>
+  </g>
+</svg>
