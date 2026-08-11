@@ -48,6 +48,9 @@ export const orders = pgTable("orders", {
   customerEmail: text("customer_email"),
   // Manually flagged "due" by the admin; auto-due (overdue) is computed.
   isDue: boolean("is_due").notNull().default(false),
+  // Set when the admin has viewed the order in the admin panel - drives the
+  // "new orders" notification badge in the sidebar (null = unread).
+  adminViewedAt: timestamp("admin_viewed_at", { withTimezone: true }),
   // Admin-set expected delivery date/time - chosen manually when confirming the order.
   expectedDeliveryAt: timestamp("expected_delivery_at", { withTimezone: true }),
   // Actual delivery date/time - fixed by the admin when marking the order delivered.

@@ -7,6 +7,7 @@ import { db } from "@/db";
 import { categories, contactMessages, orderItems, orders, products } from "@/db/schema";
 import { requireAdmin } from "@/lib/require-admin";
 import { deleteProductImage, saveProductImage } from "@/lib/upload-image";
+import { markAllOrdersViewed, markOrderViewed } from "@/lib/queries";
 import { slugify } from "@/lib/slugify";
 import { ORDER_STATUS_ORDER } from "@/lib/format";
 
@@ -137,6 +138,20 @@ export async function deleteProduct(id: number): Promise<void> {
   // storefront still needs its caches refreshed immediately.
   revalidatePath("/", "layout");
   revalidateTag("products", "max");
+}
+
+// Marks the admin's new orders as viewed. Called the moment the orders list
+// (orderId omitted) or a single order detail page (orderId set) opens, so the
+// sidebar "new orders" badge clears. The client component dispatches an
+// "orders:viewed" event afterwards so the badge refreshes immediately.
+export async function markOrdersViewed(orderId?: number): Promise<void> {
+  await requireAdmin();
+
+  if (orderId) {
+    await markOrderViewed(orderId);
+  } else {
+    await markAllOrdersViewed();
+  }
 }
 
 export async function updateOrderStatus(orderId: number, formData: FormData): Promise<ActionResult> {

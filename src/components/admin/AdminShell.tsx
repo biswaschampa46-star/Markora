@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { SiteLogo } from "@/components/site/SiteLogo";
+import { OrderNavBadge } from "@/components/admin/OrderNavBadge";
 
 const NAV_ITEMS = [
   { href: "/admin", label: "ড্যাশবোর্ড", icon: LayoutDashboard, exact: true },
@@ -26,7 +27,17 @@ const NAV_ITEMS = [
   { href: "/admin/messages", label: "বার্তা সমূহ", icon: Mail },
 ];
 
-export function AdminShell({ email, children }: { email: string; children: ReactNode }) {
+export function AdminShell({
+  email,
+  initialUnread,
+  initialPending,
+  children,
+}: {
+  email: string;
+  initialUnread: number;
+  initialPending: number;
+  children: ReactNode;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -61,7 +72,16 @@ export function AdminShell({ email, children }: { email: string; children: React
               }`}
             >
               <Icon className="h-5 w-5" strokeWidth={1.8} />
-              {item.label}
+              <span className="flex-1 truncate">{item.label}</span>
+              {item.href === "/admin/orders" && (
+                /* key={pathname} remounts the badge on every navigation so it
+                   re-syncs with the fresh server-rendered counts. */
+                <OrderNavBadge
+                  key={pathname}
+                  active={isActive}
+                  initial={{ unreadCount: initialUnread, pendingCount: initialPending }}
+                />
+              )}
             </Link>
           );
         })}

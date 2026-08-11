@@ -41,7 +41,7 @@ export default async function EditCategoryPage({
 
       <div className="rounded-xl border border-cream-300 bg-white p-5">
         <CategoryForm
-          action={(formData) => updateCategory(category.id, formData)}
+          action={updateCategory.bind(null, category.id)}
           defaults={{
             nameBn: category.nameBn,
             slug: category.slug,

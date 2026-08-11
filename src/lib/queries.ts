@@ -1,7 +1,7 @@
 import { unstable_cache } from "next/cache";
 import { db } from "@/db";
 import { categories, contactMessages, orderItems, orders, products } from "@/db/schema";
-import { and, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
+import { and, desc, eq, ilike, inArray, isNull, or, sql } from "drizzle-orm";
 import { getOrderDue } from "@/lib/order-due";
 
 // The public storefront catalog is cached in Next's Data Cache for 60s. This
@@ -163,6 +163,50 @@ export async function getAllOrdersAdmin(status?: string, limit?: number) {
 
   const withDue = rows.map((o) => ({ ...o, due: getOrderDue(o) }));
   return status === "due" ? withDue.filter((o) => o.due.isDue) : withDue;
+}
+
+// Counts that power the "new orders" notification badge in the admin sidebar:
+// unread = orders the admin hasn't viewed yet, pending = awaiting confirmation.
+export async function getAdminOrderNotificationCounts() {
+  const [unread, pending] = await Promise.all([
+    db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(orders)
+      .where(isNull(orders.adminViewedAt)),
+    db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(orders)
+      .where(eq(orders.status, "pending")),
+  ]);
+
+  return {
+    unreadCount: unread[0]?.count ?? 0,
+    pendingCount: pending[0]?.count ?? 0,
+  };
+}
+
+// Marks every not-yet-viewed order as viewed (fired when the admin opens the
+// orders list page), so the sidebar "new orders" badge clears.
+export async function markAllOrdersViewed(): Promise<void> {
+  await db
+    .update(orders)
+    .set({ adminViewedAt: new Date() })
+    .where(isNull(orders.adminViewedAt));
+}
+
+// Marks a single order as viewed (fired when the admin opens its detail page).
+export async function markOrderViewed(orderId: number): Promise<void> {
+  await db
+    .update(orders)
+    .set({ adminViewedAt: new Date() })
+    .where(and(eq(orders.id, orderId), isNull(orders.adminViewedAt)));
+}
+
+// Items for a set of order ids in a single query - used by the admin orders
+// list's expandable rows so every detail is visible without a query per order.
+export async function getOrderItemsByOrderIds(orderIds: number[]) {
+  if (orderIds.length === 0) return [];
+  return db.select().from(orderItems).where(inArray(orderItems.orderId, orderIds));
 }
 
 export async function getOrderWithItems(id: number) {

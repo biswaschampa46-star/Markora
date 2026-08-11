@@ -1,14 +1,8 @@
 import Link from "next/link";
-import { getAllOrdersAdmin } from "@/lib/queries";
-import {
-  formatTaka,
-  formatBanglaDate,
-  ORDER_STATUS_LABELS,
-  ORDER_STATUS_ORDER,
-  PAYMENT_METHOD_LABELS,
-} from "@/lib/format";
-import { DueBadge, StatusBadge } from "@/components/admin/StatusBadge";
-import { OrderQuickActions } from "@/components/admin/OrderQuickActions";
+import { getAllOrdersAdmin, getOrderItemsByOrderIds } from "@/lib/queries";
+import { ORDER_STATUS_LABELS, ORDER_STATUS_ORDER } from "@/lib/format";
+import { OrdersTable } from "@/components/admin/OrdersTable";
+import { MarkOrdersViewed } from "@/components/admin/MarkOrdersViewed";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +14,14 @@ export default async function AdminOrdersPage({
   const { status } = await searchParams;
   const activeStatus = status && status !== "all" ? status : "all";
   const orders = await getAllOrdersAdmin(status);
+  const items = await getOrderItemsByOrderIds(orders.map((o) => o.id));
+
+  // Group items by order id so the expandable rows can show what was ordered
+  // without running a query per order.
+  const itemsByOrder = items.reduce<Record<number, (typeof items)[number][]>>((acc, item) => {
+    (acc[item.orderId] ??= []).push(item);
+    return acc;
+  }, {});
 
   const tabs = [
     { key: "all", label: "সব" },
@@ -29,9 +31,13 @@ export default async function AdminOrdersPage({
 
   return (
     <div className="flex flex-col gap-6">
+      {/* Marks all orders as viewed the moment this page opens (clears the badge). */}
+      <MarkOrdersViewed />
       <div>
         <h1 className="text-xl font-bold text-ink-900">অর্ডার সমূহ</h1>
-        <p className="text-sm text-ink-500">সব অর্ডার পরিচালনা করুন</p>
+        <p className="text-sm text-ink-500">
+          সব অর্ডার পরিচালনা করুন — যেকোনো অর্ডারে ক্লিক করে গ্রাহকের সম্পূর্ণ তথ্য দেখুন
+        </p>
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -55,61 +61,7 @@ export default async function AdminOrdersPage({
           এই স্ট্যাটাসে কোনো অর্ডার নেই।
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-cream-300 bg-white">
-          <table className="w-full min-w-[1100px] text-left text-sm">
-            <thead>
-              <tr className="border-b border-cream-200 text-xs uppercase text-ink-500">
-                <th className="px-4 py-3">অর্ডার নম্বর</th>
-                <th className="px-4 py-3">গ্রাহক</th>
-                <th className="px-4 py-3">ইমেইল</th>
-                <th className="px-4 py-3">ফোন</th>
-                <th className="px-4 py-3">পেমেন্ট</th>
-                <th className="px-4 py-3">মোট</th>
-                <th className="px-4 py-3">স্ট্যাটাস</th>
-                <th className="px-4 py-3">তারিখ</th>
-                <th className="px-4 py-3">অ্যাকশন</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orders.map((order) => (
-                <tr
-                  key={order.id}
-                  className="border-b border-cream-100 transition last:border-0 hover:bg-cream-50"
-                >
-                  <td className="px-4 py-3">
-                    <Link
-                      href={`/admin/orders/${order.id}`}
-                      className="font-semibold text-navy-800 transition hover:text-brand-600"
-                    >
-                      {order.orderNumber}
-                    </Link>
-                  </td>
-                  <td className="px-4 py-3 text-ink-900">{order.customerName}</td>
-                  <td className="px-4 py-3 text-ink-700">{order.customerEmail ?? "—"}</td>
-                  <td className="px-4 py-3 text-ink-700">{order.phone}</td>
-                  <td className="px-4 py-3 text-ink-700">
-                    {PAYMENT_METHOD_LABELS[order.paymentMethod] ?? order.paymentMethod}
-                  </td>
-                  <td className="px-4 py-3 font-semibold text-navy-900">
-                    {formatTaka(order.total)}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-1.5">
-                      <StatusBadge status={order.status} />
-                      {order.due.isDue && <DueBadge reason={order.due.reason} />}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-xs text-ink-500">
-                    {formatBanglaDate(order.createdAt)}
-                  </td>
-                  <td className="px-4 py-3">
-                    <OrderQuickActions order={order} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <OrdersTable orders={orders} itemsByOrder={itemsByOrder} />
       )}
     </div>
   );

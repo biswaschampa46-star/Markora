@@ -30,6 +30,7 @@ import {
 import { DUE_REASON_LABELS } from "@/lib/order-due";
 import { OrderTimeline } from "@/components/site/OrderTimeline";
 import { DueBadge, StatusBadge } from "@/components/admin/StatusBadge";
+import { MarkOrdersViewed } from "@/components/admin/MarkOrdersViewed";
 import { Select } from "@/components/ui/Select";
 
 export const dynamic = "force-dynamic";
@@ -57,8 +58,31 @@ export default async function AdminOrderDetailPage({
   const expectedDelivery = getExpectedDelivery(order);
   const isTerminal = order.status === "delivered" || order.status === "cancelled";
 
+  // Inline Server Actions: each closes over this order so the forms below can
+  // submit a real server-action reference. Inline wrappers like
+  // `(formData) => void action(id, formData)` are plain client closures and
+  // cannot be serialized into a form action (Next.js runtime error).
+  async function confirmOrder(formData: FormData) {
+    "use server";
+    await confirmOrderWithDelivery(orderId, formData);
+  }
+  async function deliver(formData: FormData) {
+    "use server";
+    await deliverOrder(orderId, formData);
+  }
+  async function toggleDue() {
+    "use server";
+    await toggleOrderDue(orderId);
+  }
+  async function changeStatus(formData: FormData) {
+    "use server";
+    await updateOrderStatus(orderId, formData);
+  }
+
   return (
     <div className="flex flex-col gap-6">
+      {/* Marks this order as viewed when its detail page opens (clears the badge). */}
+      <MarkOrdersViewed orderId={order.id} />
       <div>
         <Link
           href="/admin/orders"
@@ -217,9 +241,7 @@ export default async function AdminOrderDetailPage({
               &ldquo;নিশ্চিত হয়েছে&rdquo; হয়ে যাবে এবং গ্রাহককে ডেলিভারি তারিখ দেখানো হবে।
             </p>
             <form
-              action={(formData) => {
-                void confirmOrderWithDelivery(order.id, formData);
-              }}
+              action={confirmOrder}
               className="mt-3 flex flex-col gap-3"
             >
               <label className="flex flex-col gap-1 text-xs font-medium text-ink-700">
@@ -255,9 +277,7 @@ export default async function AdminOrderDetailPage({
             <h2 className="text-sm font-bold text-ink-900">দ্রুত অ্যাকশন</h2>
             <div className="mt-3 flex flex-col gap-2">
               <form
-                action={(formData) => {
-                  void deliverOrder(order.id, formData);
-                }}
+                action={deliver}
                 className="flex flex-col gap-2"
               >
                 <label className="flex flex-col gap-1 text-xs font-medium text-ink-700">
@@ -279,7 +299,7 @@ export default async function AdminOrderDetailPage({
                 </button>
               </form>
 
-              <form action={() => void toggleOrderDue(order.id)}>
+              <form action={toggleDue}>
                 <button
                   type="submit"
                   disabled={isTerminal}
@@ -299,9 +319,7 @@ export default async function AdminOrderDetailPage({
           <div className="rounded-xl border border-cream-300 bg-white p-5">
             <h2 className="text-sm font-bold text-ink-900">স্ট্যাটাস পরিবর্তন</h2>
             <form
-              action={(formData) => {
-                void updateOrderStatus(order.id, formData);
-              }}
+              action={changeStatus}
               className="mt-3 flex flex-col gap-3"
             >
               <Select

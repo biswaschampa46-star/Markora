@@ -36,6 +36,13 @@
       "when": 1786475304397,
       "tag": "0004_woozy_monster_badoon",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1786481353168,
+      "tag": "0005_brief_vulture",
+      "breakpoints": true
     }
   ]
 }
