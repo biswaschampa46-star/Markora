@@ -49,6 +49,7 @@ export default async function AdminProductsPage() {
               {products.map((p) => (
                 <tr
                   key={p.id}
+                  data-row
                   className="border-b border-cream-100 transition last:border-0 hover:bg-cream-50"
                 >
                   <td className="px-4 py-3">

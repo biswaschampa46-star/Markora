@@ -33,6 +33,7 @@ export default async function AdminMessagesPage() {
           {messages.map((message) => (
             <div
               key={message.id}
+              data-row
               className={`rounded-xl border bg-white p-5 ${
                 message.isRead ? "border-cream-300" : "border-brand-300 bg-brand-50/40"
               }`}

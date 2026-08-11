@@ -128,7 +128,11 @@ export async function deleteProduct(id: number): Promise<void> {
   }
 
   await db.delete(products).where(eq(products.id, id));
-  revalidatePath("/admin/products");
+
+  // The admin product list refreshes client-side (router.refresh) after the
+  // row's delete animation finishes — revalidating this route here would rip
+  // the row away before the "deleted" state can be seen. The public
+  // storefront still needs its caches refreshed immediately.
   revalidatePath("/");
 }
 
@@ -328,7 +332,9 @@ export async function updateCategory(id: number, formData: FormData): Promise<Ac
 export async function deleteCategory(id: number): Promise<void> {
   await requireAdmin();
   await db.delete(categories).where(eq(categories.id, id));
-  revalidatePath("/admin/categories");
+
+  // Same as deleteProduct: the admin list refreshes via router.refresh after
+  // the delete animation; only the public storefront revalidates here.
   revalidatePath("/");
 }
 
@@ -341,5 +347,6 @@ export async function markMessageRead(id: number): Promise<void> {
 export async function deleteMessage(id: number): Promise<void> {
   await requireAdmin();
   await db.delete(contactMessages).where(eq(contactMessages.id, id));
-  revalidatePath("/admin/messages");
+  // The admin list refreshes client-side (router.refresh) after the delete
+  // animation finishes; nothing public references contact messages.
 }

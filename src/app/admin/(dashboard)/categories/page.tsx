@@ -48,6 +48,7 @@ export default async function AdminCategoriesPage() {
                 return (
                   <tr
                     key={category.id}
+                    data-row
                     className="border-b border-cream-100 transition last:border-0 hover:bg-cream-50"
                   >
                     <td className="px-4 py-3">
