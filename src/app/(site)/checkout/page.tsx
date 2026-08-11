@@ -1,12 +1,14 @@
 "use client";
 
-import { useMemo, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Check, ImageOff, Loader2, Wallet } from "lucide-react";
+import { Check, ImageOff, Loader2, LockKeyhole, UserRoundPlus, Wallet } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
 import { formatTaka } from "@/lib/format";
+import { createClient } from "@/lib/supabase/client";
+import { getUserDisplayName } from "@/lib/user-display";
 import { EmptyState } from "@/components/site/EmptyState";
 import { AnimatedNumber } from "@/components/site/AnimatedNumber";
 
@@ -15,6 +17,8 @@ export default function CheckoutPage() {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [authChecking, setAuthChecking] = useState(true);
+  const [isAuthed, setIsAuthed] = useState(false);
   const storePhone = process.env.NEXT_PUBLIC_STORE_PHONE || "01XXXXXXXXX";
   const [form, setForm] = useState({
     customerName: "",
@@ -27,6 +31,28 @@ export default function CheckoutPage() {
     paymentMethod: "cash_on_delivery",
     transactionId: "",
   });
+
+  // Every order requires a logged-in account - check the session on mount.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const client = createClient();
+      if (!client) {
+        if (!cancelled) setAuthChecking(false);
+        return;
+      }
+      const { data } = await client.auth.getUser();
+      if (cancelled) return;
+      if (data.user) {
+        setIsAuthed(true);
+        setForm((f) => ({ ...f, customerName: getUserDisplayName(data.user) }));
+      }
+      setAuthChecking(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const isDhaka = useMemo(
     () => form.city.trim().toLowerCase().includes("ঢাকা") || form.city.trim().toLowerCase().includes("dhaka"),
@@ -79,7 +105,7 @@ export default function CheckoutPage() {
     }
   }
 
-  if (!isHydrated) {
+  if (!isHydrated || authChecking) {
     return <div className="mx-auto max-w-5xl px-4 py-10" />;
   }
 
@@ -97,6 +123,44 @@ export default function CheckoutPage() {
           >
             কেনাকাটা করুন
           </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // অর্ডার করতে অবশ্যই লগইন করতে হবে
+  if (!isAuthed) {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-10">
+        <div className="rise-item rounded-2xl border border-cream-200 bg-white p-6 text-center shadow-xl shadow-navy-950/5 sm:p-10">
+          <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-50 text-brand-500">
+            <LockKeyhole className="h-8 w-8" strokeWidth={1.6} />
+          </span>
+          <h1 className="mt-5 text-xl font-bold text-ink-900">অর্ডার করতে লগইন করুন</h1>
+          <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-ink-500">
+            অর্ডার সম্পন্ন করতে আপনার অ্যাকাউন্টে লগইন করতে হবে। নতুন হলে এক মিনিটেই অ্যাকাউন্ট তৈরি
+            করে নিন — আপনার কার্টের পণ্যগুলো নিরাপদ থাকবে।
+          </p>
+          <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
+            <Link
+              href="/login?next=/checkout"
+              data-ripple
+              className="ripple-host press inline-flex items-center justify-center gap-2 rounded-xl bg-brand-500 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-brand-500/25 transition hover:bg-brand-600"
+            >
+              <LockKeyhole className="h-4 w-4" />
+              লগইন করুন
+            </Link>
+            <Link
+              href="/login?next=/checkout&mode=signup"
+              className="press inline-flex items-center justify-center gap-2 rounded-xl border border-cream-300 bg-white px-6 py-3 text-sm font-bold text-navy-900 transition hover:border-brand-400/50 hover:bg-cream-50"
+            >
+              <UserRoundPlus className="h-4 w-4" />
+              নতুন অ্যাকাউন্ট তৈরি করুন
+            </Link>
+          </div>
+          <p className="mt-6 text-xs text-ink-400">
+            কার্টের {items.length} টি পণ্য লগইনের পরও সংরক্ষিত থাকবে।
+          </p>
         </div>
       </div>
     );

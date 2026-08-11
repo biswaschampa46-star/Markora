@@ -16,7 +16,7 @@ function calculateDeliveryFee(city: string) {
 }
 
 async function insertOrderWithUniqueNumber(
-  userId: string | null,
+  userId: string,
   orderData: {
     customerName: string;
     phone: string;
@@ -58,9 +58,17 @@ async function insertOrderWithUniqueNumber(
 
 export async function POST(request: NextRequest) {
   try {
-    // Link the order to the logged-in customer when there is one (read from the
-    // session cookie server-side so it can't be spoofed by the client).
+    // Every order must belong to a logged-in account. The session is read from
+    // the cookie server-side so it can't be spoofed by the client, and the
+    // order is linked to that user below.
     const user = await getUser();
+
+    if (!user) {
+      return NextResponse.json(
+        { error: "অর্ডার করতে লগইন করতে হবে।" },
+        { status: 401 },
+      );
+    }
 
     const body = await request.json();
     const {
@@ -144,7 +152,7 @@ export async function POST(request: NextRequest) {
     const deliveryFee = calculateDeliveryFee(city);
     const total = subtotal + deliveryFee;
 
-    const order = await insertOrderWithUniqueNumber(user?.id ?? null, {
+    const order = await insertOrderWithUniqueNumber(user.id, {
       customerName,
       phone,
       altPhone: altPhone || null,

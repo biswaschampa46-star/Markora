@@ -41,7 +41,7 @@ export const products = pgTable("products", {
 export const orders = pgTable("orders", {
   id: serial("id").primaryKey(),
   orderNumber: text("order_number").notNull().unique(),
-  // Supabase auth user id for logged-in customers (guest orders stay null).
+  // Supabase auth user id - required for new orders (legacy guest orders may be null).
   userId: text("user_id"),
   // Manually flagged "due" by the admin; auto-due (overdue) is computed.
   isDue: boolean("is_due").notNull().default(false),
