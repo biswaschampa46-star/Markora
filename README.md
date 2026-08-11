@@ -65,6 +65,32 @@ Reachable only by URL (`/admin`) - there are no links to it from the public site
 2. Open `/admin/login` and sign in.
 3. The dashboard covers products, categories, orders (with status updates and automatic restock on cancel), and contact messages.
 
+## Product images on Vercel (Supabase Storage)
+
+Product images are stored in **Supabase Storage**, not on the local disk. This is required because Vercel's serverless filesystem is read-only - a local `public/uploads` folder works in `next dev` but every upload fails after deploying.
+
+### One-time setup (Supabase dashboard)
+
+1. **Storage -> New bucket**, name it exactly `product-images` and enable **Public bucket**.
+2. Recommended: add the server-only key so uploads work without extra policies:
+   - Project Settings -> API -> copy the `service_role` key.
+   - Add it as `SUPABASE_SERVICE_ROLE_KEY` in your `.env` **and** in Vercel (Project -> Settings -> Environment Variables, tick Production + Preview).
+   - The service role key is powerful - never put it in a `NEXT_PUBLIC_*` variable.
+
+   Alternative (no service role key): run these two policies in the Supabase SQL editor, then the anon key can upload/delete:
+
+   ```sql
+   create policy "anon product image uploads" on storage.objects
+     for insert to anon with check (bucket_id = 'product-images');
+
+   create policy "anon product image deletes" on storage.objects
+     for delete to anon using (bucket_id = 'product-images');
+   ```
+
+3. Redeploy on Vercel after adding/changing environment variables - `NEXT_PUBLIC_*` values are baked in at build time.
+
+Note: this app also needs `DATABASE_URL`, `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` in Vercel - see the environment variables table above. If you only ran `npm run db:push` against a local database, run `npm run db:migrate` against the production connection string first so the tables exist.
+
 ## Payments
 
 - **Cash on Delivery** - default, no setup needed.

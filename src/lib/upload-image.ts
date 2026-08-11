@@ -1,8 +1,11 @@
-import { mkdir, unlink, writeFile } from "node:fs/promises";
-import path from "node:path";
 import { randomUUID } from "node:crypto";
+import { createClient } from "@/lib/supabase/server";
 
-const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads", "products");
+// Vercel's filesystem is read-only at runtime, so product images can't be
+// written to /public like on a local machine. Instead we upload them to a
+// Supabase Storage bucket called "product-images" (create it once in the
+// Supabase dashboard under Storage, and mark it Public).
+const BUCKET = "product-images";
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
 
 export async function saveProductImage(file: File): Promise<string> {
@@ -14,23 +17,37 @@ export async function saveProductImage(file: File): Promise<string> {
     throw new Error("ছবির সাইজ ৫MB এর বেশি হতে পারবে না।");
   }
 
-  await mkdir(UPLOAD_DIR, { recursive: true });
+  const supabase = await createClient();
+  if (!supabase) {
+    throw new Error("Supabase কনফিগার করা নেই - ছবি আপলোড করা যাচ্ছে না।");
+  }
 
   const extension = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
   const filename = `${randomUUID()}.${extension}`;
-  const filePath = path.join(UPLOAD_DIR, filename);
 
-  const buffer = Buffer.from(await file.arrayBuffer());
-  await writeFile(filePath, buffer);
+  const { error } = await supabase.storage.from(BUCKET).upload(filename, file, {
+    contentType: file.type,
+    upsert: false,
+  });
 
-  return `/uploads/products/${filename}`;
+  if (error) {
+    throw new Error(`ছবি আপলোড ব্যর্থ হয়েছে: ${error.message}`);
+  }
+
+  const { data } = supabase.storage.from(BUCKET).getPublicUrl(filename);
+  return data.publicUrl;
 }
 
 export async function deleteProductImage(imageUrl: string) {
-  if (!imageUrl.startsWith("/uploads/products/")) return;
+  if (!imageUrl.includes(`/${BUCKET}/`)) return;
   try {
-    const filePath = path.join(process.cwd(), "public", imageUrl);
-    await unlink(filePath);
+    const filename = imageUrl.split(`/${BUCKET}/`).pop();
+    if (!filename) return;
+
+    const supabase = await createClient();
+    if (!supabase) return;
+
+    await supabase.storage.from(BUCKET).remove([filename]);
   } catch {
     // file might already be removed - ignore
   }
