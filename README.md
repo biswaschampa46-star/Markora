@@ -36,6 +36,8 @@ See `.env.example` for the full list. Key ones:
 | `ADMIN_NOTIFY_EMAIL` | Recipient of new-order emails | No |
 | `NOTIFY_EMAIL_FROM` | Sender address for emails | No |
 | `NEXT_PUBLIC_STORE_PHONE` | Mobile number shown for bKash/Nagad | No |
+| `ADMIN_EMAILS` | Comma-separated allowlist of admin emails (alt. to the admin role) | No |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server-only key for storage uploads + live customer email lookup | Recommended |
 
 ## Useful scripts
 
@@ -59,11 +61,32 @@ npm run db:migrate     # apply migrations (fresh/production databases)
 
 ## Admin panel
 
-Reachable only by URL (`/admin`) - there are no links to it from the public site.
+Reachable only by URL (`/admin`) - there are no links to it from the public site. **Only accounts marked as admin can enter** - a regular (or public signup) account is blocked, so the dashboard is not exposed to customers.
 
 1. Create an admin user in Supabase: **Authentication -> Users -> Add user** (email + password).
-2. Open `/admin/login` and sign in.
-3. The dashboard covers products, categories, orders (with status updates and automatic restock on cancel), and contact messages.
+2. Grant the admin role by running this in the Supabase SQL Editor (or `npm run db:migrate`, then edit `scripts/enable-rls.sql` to your email first):
+
+   ```sql
+   update auth.users
+   set raw_app_meta_data = jsonb_set(coalesce(raw_app_meta_data, '{}'::jsonb), '{role}', '"admin"'::jsonb)
+   where email = 'YOUR_ADMIN_EMAIL@gmail.com';
+   ```
+
+   Alternatively, set the `ADMIN_EMAILS` env var (comma-separated) in Vercel and redeploy - no SQL needed.
+3. Open `/admin/login` and sign in.
+4. The dashboard covers products, categories, orders (with status updates and automatic restock on cancel), customers (full profile per account, with the email taken automatically from their Supabase account), and contact messages.
+
+## Security hardening (recommended)
+
+Migration `0004` (run with `npm run db:migrate`) plus `scripts/enable-rls.sql` (for the Supabase SQL Editor):
+
+- Enables **Row Level Security** on all tables so the public Supabase REST API (browser-exposed anon key) cannot read/write customer data. The app itself is unaffected (it uses the server-side `DATABASE_URL` connection).
+- Backfills `customer_email` on existing orders from `auth.users`.
+- Grants the admin role to your admin account (edit the email in the script first).
+
+Also recommended:
+- Disable **public signup** in Supabase (Authentication -> Providers -> Email: uncheck "Allow new users to sign up") if customers should only be created by admins.
+- Set a strong password / enable 2FA on the admin account.
 
 ## Product images on Vercel (Supabase Storage)
 

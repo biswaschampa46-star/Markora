@@ -1,16 +1,21 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState, type FormEvent } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { LockKeyhole, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { SiteLogo } from "@/components/site/SiteLogo";
 
-export default function AdminLoginPage() {
+function AdminLoginContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState(
+    searchParams.get("error") === "forbidden"
+      ? "এই অ্যাকাউন্টে অ্যাডমিন প্যানেলে প্রবেশের অনুমতি নেই।"
+      : "",
+  );
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: FormEvent) {
@@ -91,5 +96,13 @@ export default function AdminLoginPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function AdminLoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <AdminLoginContent />
+    </Suspense>
   );
 }

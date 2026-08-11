@@ -1,6 +1,15 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { AlarmClockOff, ArrowLeft, CalendarClock, CheckCircle2, MapPin, Phone, User } from "lucide-react";
+import {
+  AlarmClockOff,
+  ArrowLeft,
+  CalendarClock,
+  CheckCircle2,
+  Mail,
+  MapPin,
+  Phone,
+  User,
+} from "lucide-react";
 import { getOrderWithItems } from "@/lib/queries";
 import {
   confirmOrderWithDelivery,
@@ -97,6 +106,10 @@ export default async function AdminOrderDetailPage({
                 <Phone className="h-4 w-4 text-brand-500" />
                 {order.phone}
                 {order.altPhone ? `, ${order.altPhone}` : ""}
+              </p>
+              <p className="flex items-center gap-2 text-ink-700">
+                <Mail className="h-4 w-4 text-brand-500" />
+                {order.customerEmail ?? "—"}
               </p>
               <p className="flex items-start gap-2 text-ink-700">
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-brand-500" />

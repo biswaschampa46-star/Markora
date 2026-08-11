@@ -11,6 +11,7 @@ import {
   Menu,
   Package,
   ShoppingCart,
+  Users,
   X,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -21,6 +22,7 @@ const NAV_ITEMS = [
   { href: "/admin/products", label: "পণ্য সমূহ", icon: Package },
   { href: "/admin/categories", label: "ক্যাটাগরি", icon: LayoutGrid },
   { href: "/admin/orders", label: "অর্ডার সমূহ", icon: ShoppingCart },
+  { href: "/admin/customers", label: "গ্রাহক সমূহ", icon: Users },
   { href: "/admin/messages", label: "বার্তা সমূহ", icon: Mail },
 ];
 

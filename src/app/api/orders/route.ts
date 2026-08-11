@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { orderItems, orders, products } from "@/db/schema";
-import { eq, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { generateOrderNumber } from "@/lib/order-number";
 import { sendNewOrderAdminNotification } from "@/lib/notify";
 import { getUser } from "@/lib/supabase/server";
@@ -15,8 +15,13 @@ function calculateDeliveryFee(city: string) {
   return isDhaka ? 70 : 130;
 }
 
-async function insertOrderWithUniqueNumber(
+// Runs the whole order (order row + items + stock decrement) inside a single
+// DB transaction so a failure anywhere rolls everything back. The stock
+// decrement is conditional (stock >= quantity) so concurrent orders can never
+// oversell the last unit.
+async function placeOrder(
   userId: string,
+  customerEmail: string | null,
   orderData: {
     customerName: string;
     phone: string;
@@ -31,22 +36,62 @@ async function insertOrderWithUniqueNumber(
     deliveryFee: string;
     total: string;
   },
+  lineItems: {
+    productId: number;
+    productName: string;
+    productImage: string;
+    price: number;
+    quantity: number;
+    lineTotal: number;
+  }[],
 ) {
   // Order numbers are date + random digits - retry a few times on the rare
   // unique-constraint collision instead of failing the whole order.
   for (let attempt = 0; attempt < 5; attempt++) {
     try {
-      const [order] = await db
-        .insert(orders)
-        .values({
-          orderNumber: generateOrderNumber(),
-          status: "pending",
-          userId,
-          isDue: false,
-          ...orderData,
-        })
-        .returning();
-      return order;
+      return await db.transaction(async (tx) => {
+        const [order] = await tx
+          .insert(orders)
+          .values({
+            orderNumber: generateOrderNumber(),
+            status: "pending",
+            userId,
+            customerEmail,
+            isDue: false,
+            ...orderData,
+          })
+          .returning();
+
+        if (lineItems.length > 0) {
+          await tx.insert(orderItems).values(
+            lineItems.map((item) => ({
+              orderId: order.id,
+              productId: item.productId,
+              productName: item.productName,
+              productImage: item.productImage,
+              price: item.price.toFixed(2),
+              quantity: item.quantity,
+              lineTotal: item.lineTotal.toFixed(2),
+            })),
+          );
+
+          for (const item of lineItems) {
+            // Only decrement when enough stock is left; otherwise abort the
+            // whole order (the transaction rolls back).
+            const updated = await tx
+              .update(products)
+              .set({ stock: sql`${products.stock} - ${item.quantity}` })
+              .where(and(eq(products.id, item.productId), sql`${products.stock} >= ${item.quantity}`))
+              .returning({ id: products.id });
+
+            if (updated.length === 0) {
+              throw new Error(`stock_insufficient:${item.productId}`);
+            }
+          }
+        }
+
+        return order;
+      });
     } catch (error) {
       const code = (error as { code?: string }).code;
       if (code === "23505") continue; // unique_violation - retry with a new number
@@ -108,7 +153,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const productIds: number[] = items.map((i: { productId: number }) => i.productId);
+    // Guard against malformed payloads: keep only well-formed numeric ids so
+    // a broken/malicious client can't crash the query with null/undefined entries.
+    const productIds: number[] = items
+      .map((i) =>
+        i && typeof i === "object" ? Number((i as { productId?: unknown }).productId) : NaN,
+      )
+      .filter((n) => Number.isInteger(n) && n > 0);
+
+    if (productIds.length === 0) {
+      return NextResponse.json({ error: "বৈধ কোনো পণ্য পাওয়া যায়নি।" }, { status: 400 });
+    }
+
     const dbProducts = await db
       .select()
       .from(products)
@@ -128,10 +184,17 @@ export async function POST(request: NextRequest) {
       lineTotal: number;
     }[] = [];
 
-    for (const item of items as { productId: number; quantity: number }[]) {
-      const product = dbProducts.find((p) => p.id === item.productId);
+    for (const raw of items as unknown[]) {
+      // Skip junk entries (null, strings, etc.) instead of crashing.
+      if (!raw || typeof raw !== "object") continue;
+      const item = raw as { productId?: unknown; quantity?: unknown };
+      const product = dbProducts.find((p) => p.id === Number(item.productId));
       if (!product) continue;
-      const quantity = Math.max(1, Math.min(Number(item.quantity) || 1, product.stock || 99));
+      // Only whole quantities make sense - drop malformed line items.
+      const rawQuantity = Number(item.quantity);
+      if (!Number.isInteger(rawQuantity) || rawQuantity < 1) continue;
+      const quantity = Math.min(rawQuantity, product.stock ?? 99);
+      if (quantity < 1) continue; // out of stock
       const price = Number(product.price);
       const lineTotal = price * quantity;
       subtotal += lineTotal;
@@ -152,39 +215,27 @@ export async function POST(request: NextRequest) {
     const deliveryFee = calculateDeliveryFee(city);
     const total = subtotal + deliveryFee;
 
-    const order = await insertOrderWithUniqueNumber(user.id, {
-      customerName,
-      phone,
-      altPhone: altPhone || null,
-      address,
-      city,
-      area: area || null,
-      note: note || null,
-      paymentMethod: method,
-      transactionId: trxId,
-      subtotal: subtotal.toFixed(2),
-      deliveryFee: deliveryFee.toFixed(2),
-      total: total.toFixed(2),
-    });
-
-    await db.insert(orderItems).values(
-      lineItems.map((item) => ({
-        orderId: order.id,
-        productId: item.productId,
-        productName: item.productName,
-        productImage: item.productImage,
-        price: item.price.toFixed(2),
-        quantity: item.quantity,
-        lineTotal: item.lineTotal.toFixed(2),
-      })),
+    // The customer's email comes from their logged-in account automatically -
+    // it is never collected in a form.
+    const order = await placeOrder(
+      user.id,
+      user.email ?? null,
+      {
+        customerName,
+        phone,
+        altPhone: altPhone || null,
+        address,
+        city,
+        area: area || null,
+        note: note || null,
+        paymentMethod: method,
+        transactionId: trxId,
+        subtotal: subtotal.toFixed(2),
+        deliveryFee: deliveryFee.toFixed(2),
+        total: total.toFixed(2),
+      },
+      lineItems,
     );
-
-    for (const item of lineItems) {
-      await db
-        .update(products)
-        .set({ stock: sql`greatest(${products.stock} - ${item.quantity}, 0)` })
-        .where(eq(products.id, item.productId));
-    }
 
     // Fire the admin notification - failures inside are swallowed, never block the response.
     void sendNewOrderAdminNotification({
@@ -204,6 +255,13 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ orderNumber: order.orderNumber });
   } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    if (message.startsWith("stock_insufficient")) {
+      return NextResponse.json(
+        { error: "পণ্যের স্টক অপর্যাপ্ত — কিছু পণ্য বিক্রি হয়ে গেছে, কার্ট আপডেট করুন।" },
+        { status: 409 },
+      );
+    }
     console.error(error);
     return NextResponse.json(
       { error: "অর্ডার সম্পন্ন করা যায়নি, আবার চেষ্টা করুন।" },

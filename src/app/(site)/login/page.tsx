@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2, LockKeyhole, UserRound, UserRoundPlus } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { getSiteUrl } from "@/lib/supabase/config";
 import { sanitizeNextPath } from "@/lib/safe-next";
 
 function GoogleIcon({ className }: { className?: string }) {
@@ -97,7 +98,7 @@ function LoginContent() {
     const { error: oauthError } = await client.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
+        redirectTo: `${getSiteUrl()}/auth/callback?next=${encodeURIComponent(next)}`,
       },
     });
     if (oauthError) {
@@ -123,7 +124,7 @@ function LoginContent() {
         password,
         options: {
           data: { full_name: name.trim() || undefined },
-          emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
+          emailRedirectTo: `${getSiteUrl()}/auth/callback?next=${encodeURIComponent(next)}`,
         },
       });
       if (signUpError) {

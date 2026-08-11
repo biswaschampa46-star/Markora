@@ -43,6 +43,9 @@ export const orders = pgTable("orders", {
   orderNumber: text("order_number").notNull().unique(),
   // Supabase auth user id - required for new orders (legacy guest orders may be null).
   userId: text("user_id"),
+  // Customer's account email, captured automatically from their Supabase
+  // session at order time (never typed in a form). Null for legacy orders.
+  customerEmail: text("customer_email"),
   // Manually flagged "due" by the admin; auto-due (overdue) is computed.
   isDue: boolean("is_due").notNull().default(false),
   // Admin-set expected delivery date/time - chosen manually when confirming the order.

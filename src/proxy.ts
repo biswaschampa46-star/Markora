@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseEnv } from "@/lib/supabase/config";
+import { isAdminUser } from "@/lib/admin-role";
 
 const PUBLIC_ADMIN_PATHS = ["/admin/login", "/admin/setup"];
 
@@ -45,8 +46,16 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/admin/login", request.url));
   }
 
-  if (user && pathname === "/admin/login") {
-    return NextResponse.redirect(new URL("/admin", request.url));
+  if (user) {
+    // Logged in but not an admin: block the whole dashboard and show the
+    // "no permission" message on the login page (avoids a redirect loop).
+    if (!isPublicAdminPath && !isAdminUser(user)) {
+      return NextResponse.redirect(new URL("/admin/login?error=forbidden", request.url));
+    }
+    // Admins who are already signed in skip the login page.
+    if (pathname === "/admin/login" && isAdminUser(user)) {
+      return NextResponse.redirect(new URL("/admin", request.url));
+    }
   }
 
   return response;

@@ -56,11 +56,12 @@ export default async function AdminOrdersPage({
         </div>
       ) : (
         <div className="overflow-x-auto rounded-xl border border-cream-300 bg-white">
-          <table className="w-full min-w-[980px] text-left text-sm">
+          <table className="w-full min-w-[1100px] text-left text-sm">
             <thead>
               <tr className="border-b border-cream-200 text-xs uppercase text-ink-500">
                 <th className="px-4 py-3">অর্ডার নম্বর</th>
                 <th className="px-4 py-3">গ্রাহক</th>
+                <th className="px-4 py-3">ইমেইল</th>
                 <th className="px-4 py-3">ফোন</th>
                 <th className="px-4 py-3">পেমেন্ট</th>
                 <th className="px-4 py-3">মোট</th>
@@ -84,6 +85,7 @@ export default async function AdminOrdersPage({
                     </Link>
                   </td>
                   <td className="px-4 py-3 text-ink-900">{order.customerName}</td>
+                  <td className="px-4 py-3 text-ink-700">{order.customerEmail ?? "—"}</td>
                   <td className="px-4 py-3 text-ink-700">{order.phone}</td>
                   <td className="px-4 py-3 text-ink-700">
                     {PAYMENT_METHOD_LABELS[order.paymentMethod] ?? order.paymentMethod}

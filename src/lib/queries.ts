@@ -247,3 +247,41 @@ export async function getDashboardStats() {
 export async function getContactMessagesAdmin() {
   return db.select().from(contactMessages).orderBy(desc(contactMessages.createdAt));
 }
+
+// ---------- Customers (admin) ----------
+// One row per registered customer (orders linked to a Supabase account), with
+// their latest name/phone/email, order count, total spent and first/last
+// order dates. Email is captured automatically from the customer's account at
+// order time (and backfilled by migration 0004).
+export type CustomerSummary = {
+  userId: string;
+  customerName: string;
+  phone: string;
+  customerEmail: string | null;
+  orderCount: number;
+  totalSpent: string;
+  lastOrderAt: Date;
+  firstOrderAt: Date;
+};
+
+export async function getCustomersAdmin(): Promise<CustomerSummary[]> {
+  const rows = await db
+    .select({
+      userId: orders.userId,
+      customerName: sql<string>`(array_agg(${orders.customerName} order by ${orders.createdAt} desc))[1]`,
+      phone: sql<string>`(array_agg(${orders.phone} order by ${orders.createdAt} desc))[1]`,
+      // Pick the newest non-null email (nulls sort last, newest first).
+      customerEmail: sql<string | null>`(array_agg(${orders.customerEmail} order by (${orders.customerEmail} is null), ${orders.createdAt} desc))[1]`,
+      orderCount: sql<number>`count(*)::int`,
+      totalSpent: sql<string>`coalesce(sum(${orders.total}), 0)`,
+      lastOrderAt: sql<Date>`max(${orders.createdAt})`,
+      firstOrderAt: sql<Date>`min(${orders.createdAt})`,
+    })
+    .from(orders)
+    .where(sql`${orders.userId} is not null`)
+    .groupBy(orders.userId)
+    .orderBy(sql`max(${orders.createdAt}) desc`);
+
+  // The WHERE clause guarantees non-null user ids; narrow the type for callers.
+  return rows.map((row) => ({ ...row, userId: row.userId as string }));
+}
