@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
-const BRAND = "Markora";
+import { SiteLogo } from "./SiteLogo";
 
 /**
  * Full-screen brand intro shown once on the first page load.
@@ -38,17 +37,10 @@ export function Preloader() {
 
   return (
     <div className={`preloader ${phase === "hide" ? "is-done" : ""}`} aria-hidden="true">
-      <div className="flex flex-col items-center gap-5">
-        <p className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
-          {BRAND.split("").map((letter, i) => (
-            <span key={i} className="pl-letter" style={{ animationDelay: `${i * 70}ms` }}>
-              {letter}
-            </span>
-          ))}
-          <span className="pl-dot" style={{ animationDelay: "420ms" }}>
-            .
-          </span>
-        </p>
+      <div className="flex flex-col items-center gap-6">
+        <div className="pl-letter">
+          <SiteLogo className="h-16" priority />
+        </div>
         <div className="pl-bar">
           <i />
         </div>

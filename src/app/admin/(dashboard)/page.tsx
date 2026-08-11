@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export default async function AdminDashboardPage() {
   const [stats, recentOrders] = await Promise.all([
     getDashboardStats(),
-    getAllOrdersAdmin().then((rows) => rows.slice(0, 6)),
+    getAllOrdersAdmin(undefined, 6),
   ]);
 
   return (

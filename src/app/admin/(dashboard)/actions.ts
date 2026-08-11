@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { eq, sql } from "drizzle-orm";
 import { db } from "@/db";
@@ -68,7 +68,8 @@ export async function createProduct(formData: FormData): Promise<ActionResult> {
   });
 
   revalidatePath("/admin/products");
-  revalidatePath("/");
+  revalidatePath("/", "layout");
+  revalidateTag("products", "max");
   redirect("/admin/products");
 }
 
@@ -115,7 +116,8 @@ export async function updateProduct(id: number, formData: FormData): Promise<Act
     .where(eq(products.id, id));
 
   revalidatePath("/admin/products");
-  revalidatePath("/");
+  revalidatePath("/", "layout");
+  revalidateTag("products", "max");
   redirect("/admin/products");
 }
 
@@ -133,7 +135,8 @@ export async function deleteProduct(id: number): Promise<void> {
   // row's delete animation finishes — revalidating this route here would rip
   // the row away before the "deleted" state can be seen. The public
   // storefront still needs its caches refreshed immediately.
-  revalidatePath("/");
+  revalidatePath("/", "layout");
+  revalidateTag("products", "max");
 }
 
 export async function updateOrderStatus(orderId: number, formData: FormData): Promise<ActionResult> {
@@ -291,7 +294,9 @@ export async function createCategory(formData: FormData): Promise<ActionResult> 
   await db.insert(categories).values({ nameBn, slug: slugify(nameBn), icon, sortOrder });
 
   revalidatePath("/admin/categories");
-  revalidatePath("/");
+  revalidatePath("/", "layout");
+  revalidateTag("categories", "max");
+  revalidateTag("products", "max");
   redirect("/admin/categories");
 }
 
@@ -325,7 +330,9 @@ export async function updateCategory(id: number, formData: FormData): Promise<Ac
   }
 
   revalidatePath("/admin/categories");
-  revalidatePath("/");
+  revalidatePath("/", "layout");
+  revalidateTag("categories", "max");
+  revalidateTag("products", "max");
   redirect("/admin/categories");
 }
 
@@ -335,7 +342,9 @@ export async function deleteCategory(id: number): Promise<void> {
 
   // Same as deleteProduct: the admin list refreshes via router.refresh after
   // the delete animation; only the public storefront revalidates here.
-  revalidatePath("/");
+  revalidatePath("/", "layout");
+  revalidateTag("categories", "max");
+  revalidateTag("products", "max");
 }
 
 export async function markMessageRead(id: number): Promise<void> {

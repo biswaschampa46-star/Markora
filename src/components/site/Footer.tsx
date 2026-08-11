@@ -2,6 +2,7 @@ import Link from "next/link";
 import { BadgeCheck, Lock, RotateCcw, Truck } from "lucide-react";
 import { getCategories } from "@/lib/queries";
 import { Reveal } from "./Reveal";
+import { SiteLogo } from "./SiteLogo";
 
 export async function Footer() {
   const categories = await getCategories();
@@ -36,9 +37,7 @@ export async function Footer() {
 
       <div className="mx-auto grid max-w-7xl grid-cols-2 gap-8 px-4 py-10 sm:grid-cols-4 lg:px-8">
         <Reveal variant="up" delay={0} className="col-span-2 sm:col-span-1">
-          <span className="text-xl font-extrabold text-white">
-            Markora<span className="text-brand-500">.</span>
-          </span>
+          <SiteLogo className="h-10" />
           <p className="mt-3 text-sm leading-relaxed text-cream-300/80">
             Markora একটি বাংলাদেশ কেন্দ্রিক অনলাইন মার্কেটপ্লেস, যেখানে সহজে ও নিরাপদে পণ্য অর্ডার
             করা যায়।

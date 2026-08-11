@@ -9,6 +9,7 @@ import { WishlistBadge } from "./WishlistBadge";
 import { SearchBar } from "./SearchBar";
 import { MobileMenu } from "./MobileMenu";
 import { AccountMenu } from "./AccountMenu";
+import { SiteLogo } from "./SiteLogo";
 
 export async function Header() {
   const [categories, user] = await Promise.all([getCategories(), getUser()]);
@@ -48,8 +49,8 @@ export async function Header() {
           <MobileMenu categories={categories} user={user} />
 
           <Link href="/" className="group shrink-0" aria-label="Markora হোম">
-            <span className="text-2xl font-extrabold tracking-tight text-white transition-transform duration-300 group-hover:scale-[1.03]">
-              Markora<span className="text-brand-500 transition-colors duration-300 group-hover:text-brand-400">.</span>
+            <span className="block transition-transform duration-300 group-hover:scale-[1.03]">
+              <SiteLogo className="h-9" priority />
             </span>
           </Link>
 

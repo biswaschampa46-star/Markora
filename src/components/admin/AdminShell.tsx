@@ -11,10 +11,10 @@ import {
   Menu,
   Package,
   ShoppingCart,
-  Store,
   X,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { SiteLogo } from "@/components/site/SiteLogo";
 
 const NAV_ITEMS = [
   { href: "/admin", label: "ড্যাশবোর্ড", icon: LayoutDashboard, exact: true },
@@ -40,11 +40,9 @@ export function AdminShell({ email, children }: { email: string; children: React
 
   const navContent = (
     <>
-      <div className="flex items-center gap-2 border-b border-navy-800 px-5 py-5">
-        <Store className="h-6 w-6 text-brand-500" strokeWidth={1.8} />
-        <span className="text-lg font-extrabold text-white">
-          Markora<span className="text-brand-500">.</span>
-        </span>
+      <div className="flex items-center gap-3 border-b border-navy-800 px-4 py-4">
+        <SiteLogo className="h-9" />
+        <span className="text-sm font-bold text-white">অ্যাডমিন প্যানেল</span>
       </div>
 
       <nav className="flex flex-1 flex-col gap-1 px-3 py-4">
@@ -111,9 +109,8 @@ export function AdminShell({ email, children }: { email: string; children: React
           >
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
-          <span className="text-base font-extrabold text-navy-900">
-            Markora<span className="text-brand-500">.</span> অ্যাডমিন
-          </span>
+          <SiteLogo className="h-7" chip={false} />
+          <span className="text-base font-extrabold text-navy-900">অ্যাডমিন</span>
         </header>
 
         <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>

@@ -11,6 +11,7 @@ import { toBanglaDigits } from "@/lib/format";
 import { signOutUser } from "@/lib/supabase/client";
 import { getUserDisplayName, getUserInitial, type PublicUser } from "@/lib/user-display";
 import { SearchBar } from "./SearchBar";
+import { SiteLogo } from "./SiteLogo";
 
 type Category = { slug: string; nameBn: string; icon: string };
 
@@ -84,9 +85,7 @@ export function MobileMenu({
           aria-label="মেনু"
         >
           <div className="flex items-center justify-between bg-navy-900 px-4 py-4">
-            <span className="text-lg font-bold text-white">
-              Markora<span className="text-brand-500">.</span>
-            </span>
+            <SiteLogo className="h-8" />
             <button
               aria-label="বন্ধ করুন"
               onClick={() => setOpen(false)}

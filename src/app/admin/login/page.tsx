@@ -2,8 +2,9 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { LockKeyhole, Loader2, ShieldCheck } from "lucide-react";
+import { LockKeyhole, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { SiteLogo } from "@/components/site/SiteLogo";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -42,9 +43,7 @@ export default function AdminLoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-navy-950 px-4">
       <div className="w-full max-w-sm rounded-2xl bg-white p-8 shadow-xl">
         <div className="flex flex-col items-center text-center">
-          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-navy-900 text-white">
-            <ShieldCheck className="h-6 w-6" strokeWidth={1.8} />
-          </span>
+          <SiteLogo className="h-14" chip={false} />
           <h1 className="mt-3 text-lg font-bold text-ink-900">
             Markora<span className="text-brand-500">.</span> অ্যাডমিন
           </h1>
