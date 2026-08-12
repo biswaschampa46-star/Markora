@@ -138,7 +138,7 @@ export default function CartPage() {
           <h2 className="text-base font-bold text-ink-900">অর্ডার সারসংক্ষেপ</h2>
           <div className="mt-4 flex items-center justify-between text-sm text-ink-700">
             <span>সাবটোটাল</span>
-            <AnimatedNumber value={totalPrice} format={formatTaka} className="font-semibold" />
+            <AnimatedNumber value={totalPrice} format="taka" className="font-semibold" />
           </div>
           <p className="mt-1 text-xs text-ink-500">ডেলিভারি চার্জ চেকআউটে যোগ হবে</p>
           <Link

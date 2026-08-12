@@ -1,6 +1,16 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { formatTaka } from "@/lib/format";
+
+// Resolved client-side so server components can pass a plain string instead
+// of a function reference (functions can't cross the server->client boundary).
+type FormatMode = "taka" | "number";
+
+const FORMATTERS: Record<FormatMode, (n: number) => string> = {
+  taka: formatTaka,
+  number: (n) => String(Math.round(n)),
+};
 
 /**
  * Counts from the previous value to `value` with an ease-out curve.
@@ -9,23 +19,23 @@ import { useEffect, useRef } from "react";
  */
 export function AnimatedNumber({
   value,
-  format,
+  format = "number",
   duration = 650,
   className,
 }: {
   value: number;
-  format?: (n: number) => string;
+  format?: FormatMode;
   duration?: number;
   className?: string;
 }) {
   const ref = useRef<HTMLSpanElement>(null);
   const fromRef = useRef(0);
-  const formatRef = useRef(format);
+  const formatRef = useRef(FORMATTERS[format]);
 
   // Keep the latest formatter without re-running the count-up effect.
   useEffect(() => {
-    formatRef.current = format;
-  });
+    formatRef.current = FORMATTERS[format];
+  }, [format]);
 
   useEffect(() => {
     const el = ref.current;
@@ -34,12 +44,12 @@ export function AnimatedNumber({
     const fmt = formatRef.current;
     const from = fromRef.current;
     if (from === value) {
-      el.textContent = fmt ? fmt(value) : String(Math.round(value));
+      el.textContent = fmt(value);
       return;
     }
 
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      el.textContent = fmt ? fmt(value) : String(Math.round(value));
+      el.textContent = fmt(value);
       fromRef.current = value;
       return;
     }
@@ -50,7 +60,7 @@ export function AnimatedNumber({
       const p = Math.min(1, (now - start) / duration);
       const eased = 1 - Math.pow(1 - p, 3);
       const current = from + (value - from) * eased;
-      el.textContent = fmt ? fmt(current) : String(Math.round(current));
+      el.textContent = fmt(current);
       if (p < 1) {
         raf = requestAnimationFrame(tick);
       } else {
@@ -61,5 +71,5 @@ export function AnimatedNumber({
     return () => cancelAnimationFrame(raf);
   }, [value, duration]);
 
-  return <span ref={ref} className={className}>{format ? format(0) : "0"}</span>;
+  return <span ref={ref} className={className}>{FORMATTERS[format](0)}</span>;
 }

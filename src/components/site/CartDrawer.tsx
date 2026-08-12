@@ -182,7 +182,7 @@ export function CartDrawer() {
             <span>সাবটোটাল</span>
             <AnimatedNumber
               value={totalPrice}
-              format={formatTaka}
+              format="taka"
               className="text-base font-bold text-navy-900"
             />
           </div>

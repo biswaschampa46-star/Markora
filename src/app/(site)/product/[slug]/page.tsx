@@ -71,7 +71,7 @@ export default async function ProductPage({
           <div className="rise-item flex items-baseline gap-3" style={{ "--d": "90ms" } as React.CSSProperties}>
             <AnimatedNumber
               value={price}
-              format={formatTaka}
+              format="taka"
               className="text-2xl font-extrabold text-navy-900 tabular-nums"
             />
             {oldPrice && oldPrice > price && (

@@ -393,19 +393,19 @@ export default function CheckoutPage() {
           <div className="mt-4 flex flex-col gap-1.5 border-t border-cream-200 pt-3 text-sm">
             <div className="flex justify-between text-ink-700">
               <span>সাবটোটাল</span>
-              <AnimatedNumber value={totalPrice} format={formatTaka} />
+              <AnimatedNumber value={totalPrice} format="taka" />
             </div>
             <div className="flex justify-between text-ink-700">
               <span>ডেলিভারি চার্জ</span>
               {deliveryFee ? (
-                <AnimatedNumber value={deliveryFee} format={formatTaka} />
+                <AnimatedNumber value={deliveryFee} format="taka" />
               ) : (
                 <span>শহর লিখুন</span>
               )}
             </div>
             <div className="mt-1 flex justify-between border-t border-cream-200 pt-2 text-base font-bold text-navy-900">
               <span>সর্বমোট</span>
-              <AnimatedNumber value={total} format={formatTaka} className="tabular-nums" />
+              <AnimatedNumber value={total} format="taka" className="tabular-nums" />
             </div>
           </div>
 
